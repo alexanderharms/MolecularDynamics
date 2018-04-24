@@ -9,10 +9,10 @@ from MD import initialize, simulate
 # Simulation of argon atoms in a volume V with length L.
 rho = 0.80 # Density  [kg/m3]
 T = 1.462 # Temperature [120*K]. Temperature will be regulated until system is in equillibrium [120*K]
-Nuc = 3 # Number of unit cells in one dimension. For actual measurements Nuc = 6 is advised
+Nuc = 3 # Number of unit cells in one dimension.
 
 dt = 0.004 # Time step of the simulation
-n_t = 5500 # Total amount of time steps. For an actual measurement n_t = 15500 is advised.
+n_t = 5500 # Total amount of time steps.
 tEquilibrium = 500 # Time steps after which the temperature is constant. Condition: tEquilibrium < n_t
 TimeBlock = 1000 # Time interval over which one measurement is performed
 
@@ -22,11 +22,12 @@ Nbins = 300 # Number of bins in histogram for the correlation function g(r)
 pos, vel, V, N, L, Luc, binLength = initialize(Nuc, rho, T, Nbins)
 
 # Run the simulation for the argon atoms
-posNew, velNew, potEnergy, kinEnergy, g, errorg, r, Cv, CvPre, errorCv, errorCvPre, Pressure, errorPressure = simulate(V, N, L, T, tEquilibrium, pos, vel, n_t, dt, Nbins, binLength, TimeBlock)
+posNew, velNew, potEnergy, kinEnergy, g, errorg, r, Cv, CvPre, errorCv, \
+errorCvPre, Pressure, errorPressure = simulate(V, N, L, T, tEquilibrium, pos, \
+vel, n_t, dt, Nbins, binLength, TimeBlock)
 
 
-font = {'family' : 'serif',
-        'size'   : 18}
+font = {'family' : 'serif', 'size'   : 18}
 
 plt.rc('font', **font)
 
@@ -49,7 +50,8 @@ fig.savefig('energy.pdf', bbox_inches='tight')
 fig2 = plt.figure()
 plt.plot(r, g, linewidth = 2)
 plt.axhline(y = 1, color = 'k', linestyle = 'dashed', linewidth = 2)
-plt.fill_between(r, g-errorg, g+errorg, alpha = 0.5, edgecolor = '#CC4F1B', facecolor = '#FF9848')
+plt.fill_between(r, g-errorg, g+errorg, alpha = 0.5, edgecolor = '#CC4F1B', \
+facecolor = '#FF9848')
 plt.ylabel('g(r)')
 plt.xlabel('r/$\sigma$')
 plt.title('Correlation function')

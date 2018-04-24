@@ -235,7 +235,8 @@ def simulate(V, N, L, T, tEquilibrium, pos, vel, n_t, dt, Nbins, binLength, Time
         pos = pos % L # apply repeated boundary conditions
 
         # Calculate the new force of the particles, potential energy, the virial 'drF', and histogram.
-        Force, potEnergy[ii], drF[ii], histogram[ii,:] = DistanceForce(pos, N, L, Nbins, binLength)
+        Force, potEnergy[ii], drF[ii], histogram[ii,:] = DistanceForce(pos, N, L, \
+        Nbins, binLength)
 
         vel += 0.5 * Force * dt
 
@@ -254,13 +255,16 @@ def simulate(V, N, L, T, tEquilibrium, pos, vel, n_t, dt, Nbins, binLength, Time
     NumberOfBlocks = int((n_t - tEquilibrium)/TimeBlock) # Calculate the number of measurement intervals in total time
 
     # Calculate the heat capacity Cv and its prefactor Cv/N with the corresponding errors
-    Cv, CvPre, errorCv, errorCvPre = Heat_Capacity(kinEnergy[tEquilibrium:], N, TimeBlock, NumberOfBlocks)
+    Cv, CvPre, errorCv, errorCvPre = Heat_Capacity(kinEnergy[tEquilibrium:], N, \
+    TimeBlock, NumberOfBlocks)
 
     # Calculate the correlation function g(r) and the error
-    g, errorg, r = histogram_g(histogram, Nbins, binLength, V, N, tEquilibrium, TimeBlock, NumberOfBlocks)
+    g, errorg, r = histogram_g(histogram, Nbins, binLength, V, N, tEquilibrium, \
+    TimeBlock, NumberOfBlocks)
 
     # Calculate the pressure in the volume.
-    Pressure, errorPressure = Calculate_Pressure(drF, actualT, N, L, TimeBlock, NumberOfBlocks)
+    Pressure, errorPressure = Calculate_Pressure(drF, actualT, N, L, TimeBlock, \
+    NumberOfBlocks)
 
     print('The number of measurements is: ', NumberOfBlocks, '\n')
 
@@ -269,4 +273,5 @@ def simulate(V, N, L, T, tEquilibrium, pos, vel, n_t, dt, Nbins, binLength, Time
     print('Pressure: ',  round(Pressure, 4), '+-', round(errorPressure, 4))
     print('Average Temperature: ',  round( np.average(actualT[tEquilibrium:]), 4))
 
-    return pos, vel, potEnergy, kinEnergy, g, errorg, r, Cv, CvPre, errorCv, errorCvPre, Pressure, errorPressure
+    return pos, vel, potEnergy, kinEnergy, g, errorg, r, Cv, CvPre, errorCv, \
+    errorCvPre, Pressure, errorPressure
