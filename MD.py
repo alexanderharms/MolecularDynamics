@@ -150,6 +150,7 @@ class MolecularDynamics():
         self.visualization(kin_energy, pot_energy, drF, histogram)
 
     def visualization(self, kin_energy, pot_energy, drF, histogram):
+        """ Prints and plots the results of the simulations """
         n_t = self.n_t
         t_equilibrium = self.t_equilibrium
         time_block = self.time_block
@@ -209,7 +210,6 @@ class MolecularDynamics():
         plt.tick_params(axis = 'both', pad = 10)
 
         fig2.savefig('correlation.pdf', bbox_inches='tight')
-
 
     @jit # Compiles the following function to machine code for enhanced computation speed
     def distanceforce(self, pos):
@@ -287,7 +287,8 @@ class MolecularDynamics():
         return LJForce, LJPotential, drF, histogram
 
     def heat_capacity(self, kin_energy):
-        # Calculates the specific heat capacity from the variance of the kinetic energy with the Lebowitz formula.
+        """Calculates the specific heat capacity from the variance of the kinetic
+        energy with the Lebowitz formula."""
         N = self.N
         time_block = self.time_block
         number_blocks = self.number_blocks
@@ -297,7 +298,7 @@ class MolecularDynamics():
         Cv = np.zeros(number_blocks)
         CvPre = np.zeros(number_blocks)
 
-        # Measure the Cv for each TimeBlock
+        # Measure the Cv for each time block
         for ii in range(number_blocks):
             kin_block = kin_energy[ii*time_block : (ii+1)*time_block] # Kinetic energy within time_block
 
@@ -314,7 +315,7 @@ class MolecularDynamics():
         return MeanCv, MeanCvPre, ErrorCv, ErrorCvPre
 
     def histogram_g(self, histogram):
-
+        """ Calculates the g factor """
         Nbins = self.Nbins
         binlength = self.binlength
         V = self.V
@@ -344,7 +345,7 @@ class MolecularDynamics():
         return meang, errorg, r
 
     def calculate_pressure(self, drF, T_actual):
-
+        """ Calculates pressure for NVT ensemble """
         N = self.N
         L = self.L
         time_block = self.time_block
@@ -352,7 +353,7 @@ class MolecularDynamics():
 
         pressure = np.zeros(number_blocks) # Create empty array
 
-        # Measure the pressure for each TimeBlock
+        # Measure the pressure for each time block
         for ii in range(number_blocks):
             # Pressure calculation, corrected for the cutoff potential
             pressure[ii] = np.average(1.0 - drF[ii*time_block : (ii+1)*time_block]
