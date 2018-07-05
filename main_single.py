@@ -18,12 +18,50 @@ time_block = 1000 # Time interval over which one measurement is performed
 
 Nbins = 300 # Number of bins in histogram for the correlation function g(r)
 
-# Instantiate the class
-MDInst = MolecularDynamics(dt, n_t, t_equilibrium, Nuc, Nbins, time_block)
-# Define the position and velocity at t = 0
-MDInst.initialize(rho, T)
+# Instantiate the simulation
+SimInst = MolecularDynamics(dt, n_t, t_equilibrium, Nuc, Nbins, time_block, rho, T)
 # Run the simulation for the argon atoms
-MDInst.simulate()
+SimInst.simulate()
+
+print('The number of measurements is: ', SimInst.number_blocks, '\n')
+
+print('Heat Capacity: ',  round(SimInst.Cv, 4), '+-',  round(SimInst.errorCv, 4))
+print('Prefactor: ',  round(SimInst.CvPre, 4), '+-', round(SimInst.errorCvPre, 4))
+print('Pressure: ',  round(SimInst.meanPressure, 4), '+-', round(SimInst.errorPressure, 4))
+print('Average Temperature: ',  round(np.average(SimInst.T_actual[t_equilibrium:]), 4))
+
+font = {'family' : 'serif', 'size'   : 18}
+
+plt.rc('font', **font)
+
+# Plot the energy of the system
+t = np.linspace(1, n_t, n_t)
+fig = plt.figure()
+plt.plot(t, SimInst.pot_energy, label = 'Potential energy', linewidth = 2)
+plt.plot(t, SimInst.kin_energy, label = 'Kinetic energy', linewidth = 2)
+plt.plot(t, SimInst.kin_energy + SimInst.pot_energy, label = 'Total energy', linewidth = 2)
+plt.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
+plt.ylabel('Energy')
+plt.xlabel('time')
+plt.title('Energy of the system')
+plt.tick_params(axis = 'both', pad=10)
+
+fig.savefig('energy.pdf', bbox_inches='tight')
+
+# Plot the correlation function g(r)
+fig2 = plt.figure()
+plt.plot(SimInst.r, SimInst.g, linewidth = 2)
+plt.axhline(y = 1, color = 'k', linestyle = 'dashed', linewidth = 2)
+plt.fill_between(SimInst.r, SimInst.g-SimInst.errorg, SimInst.g+SimInst.errorg,
+    alpha = 0.5, edgecolor = '#CC4F1B', facecolor = '#FF9848')
+plt.ylabel('g(r)')
+plt.xlabel('r/$\sigma$')
+plt.title('Correlation function')
+plt.xlim(0, 0.5*SimInst.L)
+plt.tick_params(axis = 'both', pad = 10)
+
+fig2.savefig('correlation.pdf', bbox_inches='tight')
+
 
 # # Plot the end positions of the particles
 # fig3 = plt.figure()

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 class MolecularDynamics():
 
-    def __init__(self, dt, n_t, t_equilibrium, Nuc, Nbins, time_block):
+    def __init__(self, dt, n_t, t_equilibrium, Nuc, Nbins, time_block, rho, T):
         self.dt = dt
         self.n_t = n_t
         self.t_equilibrium = t_equilibrium
@@ -19,36 +19,35 @@ class MolecularDynamics():
         print('The number of particles is:', self.N)
         self.Nuc = Nuc
 
-    def initialize(self, rho, T):
+        self.rho = rho
+        self.T = T
+
+        self.initialize()
+
+    def initialize(self):
         """Initializes the system to return the initial position and velocity of the particles"""
 
         print('The number of particles is:', self.N)
 
-        V = self.N/rho # Volume
-        print('The volume is:', round(V, 4))
+        self.V = self.N/ self.rho # Volume
+        print('The volume is:', round(self.V, 4))
 
-        L = V**(1/3) # Length of the volume in one dimension
-        print('The length of the cubic volume is:', round(L, 4))
+        self.L = self.V**(1.0/3.0) # Length of the volume in one dimension
+        print('The length of the cubic volume is:', round(self.L, 4))
 
-        Luc = L/self.Nuc # Length of a unit cell in one dimension
+        self.Luc = self.L / self.Nuc # Length of a unit cell in one dimension
 
-        binlength = L / self.Nbins # Binlength for the histogram of correlation function g(r)
+        self.binlength = self.L / self.Nbins # Binlength for the histogram of correlation function g(r)
 
-        pos = self.initial_position(L, Luc, self.Nuc) # Calculate the initial positions
-        vel = self.initial_velocity(T, self.N) # Calculate the initial velocities
+        self.pos = self.initial_position(self.L, self.Luc, self.Nuc) # Calculate the initial positions
+        self.vel = self.initial_velocity(self.T, self.N) # Calculate the initial velocities
 
-        self.V = V
-        self.L = L
-        self.Luc = Luc
-        self.binlength = binlength
-        self.pos = pos
-        self.vel = vel
-
-        self.rho = rho
-        self.T = T
-
-    def initial_position(self, L, Luc, Nuc):
+    def initial_position(self):
         """Determines the initial positions for the Argon atoms in a FCC structure."""
+
+        L = self.L
+        Luc = self.Luc
+        Nuc = self.Nuc
 
         x = np.linspace(0, L - Luc, Nuc) # Position vector to fill the space
         xx, yy, zz = np.meshgrid(x, x, x) # Square meshgrid of positions for the atoms
@@ -84,15 +83,14 @@ class MolecularDynamics():
 
         return pos
 
-
-    def initial_velocity(self, T, N):
+    def initial_velocity(self):
         """Determines the initial velocity of the particles.
         Every component of the velocity is drawn from the normal distribution,
         such that the magnitude of the velocity is Maxwell-Boltzmann distributed."""
 
         mu = 0
-        sigma = np.sqrt(T)
-        velocity = np.random.normal(mu, sigma, (N, 3)) # Maxwell distributed velocity
+        sigma = np.sqrt(self.T)
+        velocity = np.random.normal(mu, sigma, (self.N, 3)) # Maxwell distributed velocity
 
         mean_velocity = np.mean(velocity, axis = 0)
 
@@ -146,70 +144,31 @@ class MolecularDynamics():
             # After tEquilibrium system should be in equilibrium with a somewhat constant T
             if ii < t_equilibrium and (ii % 10 == 0):
                 vel = vel * np.sqrt((N-1)*3*T / (2*kin_energy[ii]))
+        self.kin_energy = kin_energy
+        self.pot_energy = pot_energy
 
-        self.visualization(kin_energy, pot_energy, drF, histogram)
+        self.processing(drF, historgram)
 
-    def visualization(self, kin_energy, pot_energy, drF, histogram):
-        """ Prints and plots the results of the simulations """
+    def processing(self, drF, histogram):
+        """ Processes the results of the simulations into Cv, g(r) and pressure """
         n_t = self.n_t
         t_equilibrium = self.t_equilibrium
         time_block = self.time_block
-        N = self.N
-        L = self.L
 
-        T_actual = 2/(3*N)*kin_energy # Actual temperature during the simulation
+        self.T_actual = 2/(3*self.N) * self.kin_energy # Actual temperature during the simulation
 
         # Calculate several parameters from the simulation
         # The total measured time 'n_t' is divided by 'time_block' into 'number_blocks' individual measurements
         self.number_blocks = int((n_t - t_equilibrium)/time_block) # Calculate the number of measurement intervals in total time
 
         # Calculate the heat capacity Cv and its prefactor Cv/N with the corresponding errors
-        Cv, CvPre, errorCv, errorCvPre = self.heat_capacity(kin_energy[t_equilibrium:])
+        self.heat_capacity(self.kin_energy[t_equilibrium:])
 
         # Calculate the correlation function g(r) and the error
-        g, errorg, r = self.histogram_g(histogram)
+        self.histogram_g(histogram)
 
         # Calculate the pressure in the volume.
-        Pressure, errorPressure = self.calculate_pressure(drF, T_actual)
-
-        print('The number of measurements is: ', self.number_blocks, '\n')
-
-        print('Heat Capacity: ',  round(Cv, 4), '+-',  round(errorCv, 4))
-        print('Prefactor: ',  round(CvPre, 4), '+-', round(errorCvPre, 4))
-        print('Pressure: ',  round(Pressure, 4), '+-', round(errorPressure, 4))
-        print('Average Temperature: ',  round(np.average(T_actual[t_equilibrium:]), 4))
-
-        font = {'family' : 'serif', 'size'   : 18}
-
-        plt.rc('font', **font)
-
-        # Plot the energy of the system
-        t = np.linspace(1, n_t, n_t)
-        fig = plt.figure()
-        plt.plot(t, pot_energy, label = 'Potential energy', linewidth = 2)
-        plt.plot(t, kin_energy, label = 'Kinetic energy', linewidth = 2)
-        plt.plot(t, kin_energy + pot_energy, label = 'Total energy', linewidth = 2)
-        plt.legend(bbox_to_anchor = (1.05, 1), loc = 2, borderaxespad = 0.)
-        plt.ylabel('Energy')
-        plt.xlabel('time')
-        plt.title('Energy of the system')
-        plt.tick_params(axis = 'both', pad=10)
-
-        fig.savefig('energy.pdf', bbox_inches='tight')
-
-        # Plot the correlation function g(r)
-        fig2 = plt.figure()
-        plt.plot(r, g, linewidth = 2)
-        plt.axhline(y = 1, color = 'k', linestyle = 'dashed', linewidth = 2)
-        plt.fill_between(r, g-errorg, g+errorg, alpha = 0.5, edgecolor = '#CC4F1B', \
-        facecolor = '#FF9848')
-        plt.ylabel('g(r)')
-        plt.xlabel('r/$\sigma$')
-        plt.title('Correlation function')
-        plt.xlim(0, 0.5*L)
-        plt.tick_params(axis = 'both', pad = 10)
-
-        fig2.savefig('correlation.pdf', bbox_inches='tight')
+        self.calculate_pressure(drF)
 
     @jit # Compiles the following function to machine code for enhanced computation speed
     def distanceforce(self, pos):
@@ -306,13 +265,11 @@ class MolecularDynamics():
             Cv[ii] = 1/((2/(3*N)) - (np.var(kin_block) / (np.mean(kin_block)**2)))
             CvPre[ii] = Cv[ii] / N # Prefactor Cv/N: should be 3/2 for a gas and 3 for a solid.
 
-        MeanCv = np.mean(Cv) # Calculate the mean from all time blocks
-        MeanCvPre = MeanCv/N
+        self.MeanCv = np.mean(Cv) # Calculate the mean from all time blocks
+        self.MeanCvPre = MeanCv/N
 
-        ErrorCv = np.std(Cv)/np.sqrt(number_blocks) # Calculate the error
-        ErrorCvPre = ErrorCv/N
-
-        return MeanCv, MeanCvPre, ErrorCv, ErrorCvPre
+        self.ErrorCv = np.std(Cv)/np.sqrt(number_blocks) # Calculate the error
+        self.ErrorCvPre = ErrorCv/N
 
     def histogram_g(self, histogram):
         """ Calculates the g factor """
@@ -339,18 +296,17 @@ class MolecularDynamics():
                 r[jj] = binlength * (jj + 0.5) # Calculate distance vector
                 g[ii, jj] = 2*V/(N*(N-1)) * timeavgHistogram[jj] / (4*np.pi*r[jj]**2*binlength) # Correlation function g(r)
 
-        meang = np.mean(g, axis = 0) # Calculate the mean from all time blocks
-        errorg = np.std(g, axis = 0) / np.sqrt(number_blocks) # Calculate the error
+        self.meang = np.mean(g, axis = 0) # Calculate the mean from all time blocks
+        self.errorg = np.std(g, axis = 0) / np.sqrt(number_blocks) # Calculate the error
+        self.r = r
 
-        return meang, errorg, r
-
-    def calculate_pressure(self, drF, T_actual):
+    def calculate_pressure(self, drF):
         """ Calculates pressure for NVT ensemble """
         N = self.N
         L = self.L
         time_block = self.time_block
         number_blocks = self.number_blocks
-
+        T_actual = self.T_actual
         pressure = np.zeros(number_blocks) # Create empty array
 
         # Measure the pressure for each time block
@@ -360,8 +316,5 @@ class MolecularDynamics():
                                     / (3*N*T_actual[ii*time_block : (ii+1)*time_block])
                                     - 2*np.pi*N/(3*T_actual[ii*time_block : (ii+1)*time_block]*L**3) * 0.5106)
 
-        meanPressure = np.mean(pressure) # Calculate the mean from all timeblocks
-
-        errorPressure = np.std(pressure) / np.sqrt(number_blocks) # Calculate the error
-
-        return meanPressure, errorPressure
+        self.meanPressure = np.mean(pressure) # Calculate the mean from all timeblocks
+        self.errorPressure = np.std(pressure) / np.sqrt(number_blocks) # Calculate the error
