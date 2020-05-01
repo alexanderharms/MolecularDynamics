@@ -92,7 +92,7 @@ def calculate_lj(pos, dimens):
     pot_energy = LJ_pot
     return force, pot_energy, virial
 
-class SimulationEnsemble():
+class ParticlesLJ():
     def __init__(self, num_particles, environment):
         self.num_particles = num_particles
         self.envir = environment
