@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.animation import FuncAnimation
 
 def plot_energy(num_steps, dt, kin_energy, pot_energy):
     # Plot the energy of the system
@@ -32,3 +34,22 @@ def plot_g(r, g, g_error, length):
     plt.tick_params(axis = 'both', pad = 10)
 
     fig.savefig('./output/correlation.pdf', bbox_inches='tight')
+
+def animate_particles(pos_vec):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    part_scatter = ax.scatter([], [], [], marker = 'o')
+
+    def init():
+        part_scatter._offsets3d = ([], [], [])
+        return part_scatter,
+
+    def animate(i):
+        pos = pos_vec[:, :, i]
+        part_scatter._offsets3d = (pos[:, 0], pos[:, 1], pos[:, 2])
+        return part_scatter,
+
+    anim = FuncAnimation(fig, animate, init_func=init,
+                         frames=200, interval=20, blit=True)
+
+    anim.save('./output/animation.gif', writer='imagemagick')

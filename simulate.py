@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 from moleculardynamics.base import Environment, ParticlesLJ
 from moleculardynamics.vis import plot_energy, plot_g
+from moleculardynamics.vis import animate_particles
 from moleculardynamics.measurements import calc_heat_capacity
 from moleculardynamics.measurements import calc_histogram, calc_g
 
@@ -32,6 +33,7 @@ particles = ParticlesLJ(num_particles, envir)
 kin_energy = np.zeros(num_steps)
 pot_energy = np.zeros(num_steps)
 hist_array = np.zeros((num_steps, num_bins))
+pos_vec = np.zeros((particles.num_particles, 3, num_steps))
 
 for step in range(num_steps):
     if step % 100 == 0:
@@ -40,6 +42,7 @@ for step in range(num_steps):
     kin_energy[step] = particles.kin_energy
     pot_energy[step] = particles.pot_energy
     hist_array[step, :] = calc_histogram(particles.pos, envir.dimens, num_bins)
+    pos_vec[:, :, step] = particles.pos
 
 plot_energy(num_steps, dt, kin_energy, pot_energy)
 cv, _ = calc_heat_capacity(kin_energy, particles.num_particles, 
@@ -53,4 +56,5 @@ g_mean, g_error, r = calc_g(hist_array, particles.num_particles,
 
 plot_g(r, g_mean, g_error, envir.dimens[0])
 
+animate_particles(pos_vec)
 
