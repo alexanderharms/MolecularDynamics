@@ -35,9 +35,11 @@ def plot_g(r, g, g_error, length):
 
     fig.savefig('./output/correlation.pdf', bbox_inches='tight')
 
-def animate_particles(pos_vec):
+def animate_particles(pos_vec, envir):
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
+    ax = fig.add_subplot(111, projection='3d',
+            xlim=(0, envir.dimens[0]), ylim=(0, envir.dimens[1]),
+            zlim=(0, envir.dimens[2]))
     part_scatter = ax.scatter([], [], [], marker = 'o')
 
     def init():
@@ -52,4 +54,4 @@ def animate_particles(pos_vec):
     anim = FuncAnimation(fig, animate, init_func=init,
                          frames=200, interval=20, blit=True)
 
-    anim.save('./output/animation.gif', writer='imagemagick')
+    anim.save('./output/animation.mp4', writer='ffmpeg')
