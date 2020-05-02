@@ -51,7 +51,7 @@ for step in range(num_steps):
     pot_energy[step] = particles.pot_energy
     hist_array[step, :] = calc_histogram(particles.pos, envir.dimens, num_bins)
     pos_vec[:, :, step] = particles.pos
-print("Finished simulation."
+print("Finished simulation.")
 # Plot results ----------------------------------------------------------------
 plot_energy(num_steps, dt, kin_energy, pot_energy)
 cv, _ = calc_heat_capacity(kin_energy, particles.num_particles, 

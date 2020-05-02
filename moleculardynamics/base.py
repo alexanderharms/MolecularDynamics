@@ -19,6 +19,8 @@ class Environment():
     def apply_regulators(self, particles):
         self.thermostat.apply(particles)
 
+    def update_properties(self, particles):
+        self.temp = 2/(3*particles.num_particles) * particles.kin_energy
 
 class Thermostat():
     def __init__(self, temp, t_eq, t_interval):
@@ -125,6 +127,7 @@ class ParticlesLJ():
         # The volume is assumed to be cubic; only the first argument of
         # self.envir.dimens is used.
         self.envir.dimens = [self.envir.dimens[0]] * len(self.envir.dimens)
+        self.envir.dimens = np.array(self.envir.dimens)
 
         # the initial position is packed fcc.
         # 4 particles per fcc unit cell; number of unit cells in each dimension
@@ -182,8 +185,8 @@ class ParticlesLJ():
         return vel
 
     def calculate_force(self):
-        self.force, self.pot_energy, self.virial = calculate_lj(self.pos, 
-                np.array(self.envir.dimens))
+        self.force, self.pot_energy, self.virial = \
+                calculate_lj(self.pos, self.envir.dimens) 
 
     def take_step(self, dt):
         # Move the particle according to the Verlet algorithm
@@ -195,6 +198,7 @@ class ParticlesLJ():
         self.vel += 0.5 * self.force * dt
         self.kin_energy = 0.5 * np.sum(self.vel * self.vel) # Kinetc energy for this timestep
 
+        self.envir.update_properties(self)
         self.envir.apply_regulators(self)
 
         self.steps_passed += 1
