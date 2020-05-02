@@ -2,11 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from moleculardynamics.base import Environment, ParticlesLJ
+from moleculardynamics.base import Thermostat
 from moleculardynamics.vis import plot_energy, plot_g
 from moleculardynamics.measurements import calc_heat_capacity
 from moleculardynamics.measurements import calc_histogram, calc_g
 
-# Simulation of argon atoms in a volume V with length L.
+# Simulation of argon atoms 
+# Settings --------------------------------------------------------------------
 num_unit_cells_x = 3 # Number of unit cells in one dimension.
 num_particles = 4 * num_unit_cells_x**3
 rho = 0.80 # Density  [kg/m3]
@@ -17,18 +19,23 @@ temp = 1.462
 
 dt = 0.004 # Time step of the simulation
 num_steps = 5500 # Total amount of time steps.
-# Time steps after which the temperature is constant. Condition: tEquilibrium < n_t
+# Time steps after which the temperature is constant. 
 t_equilibrium = 500 
+assert t_equilibrium < num_steps, \
+        "t_equilibrium cannot be larger that num_steps"
 t_interval = 10
 
 block_size = 1000 # Time interval over which one measurement is performed
 num_blocks = int((num_steps - t_equilibrium)/block_size)
 num_bins = 300 # Number of bins in histogram for the correlation function g(r)
 
+# Instantiate classes ---------------------------------------------------------
+therm = Thermostat(temp, t_equilibrium, t_interval)
 envir = Environment(dimens, temp)
-envir.init_thermostat(t_equilibrium, t_interval)
+envir.set_thermostat(therm)
 particles = ParticlesLJ(num_particles, envir)
 
+# Run simulation --------------------------------------------------------------
 kin_energy = np.zeros(num_steps)
 pot_energy = np.zeros(num_steps)
 hist_array = np.zeros((num_steps, num_bins))
