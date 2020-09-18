@@ -1,4 +1,5 @@
 import numpy as np
+from numba import jit
 
 class Particles():
     # Controls the particles
@@ -76,7 +77,7 @@ class Particles():
         self.forces, self.pot_energy = calculate_lj(self.positions, 
                                                     sim.space.dimensions)
 
-# @jit
+@jit
 def calculate_lj(pos, dimens):
     # Pairwise interaction based on the Lennard-Jones potential
     # Cutoff 

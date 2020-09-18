@@ -1,10 +1,9 @@
 from abc import ABC
 import numpy as np
-# from numba import jit
 
 from md.particles import Particles
 from md.environment import Space, Thermostat
-from md.measurements import KinEnergy_Meas
+from md.measurements import KinEnergy_Meas, TotEnergy_Meas
 
 class Simulation(): 
     # Controls the simulation process
@@ -43,7 +42,7 @@ class Simulation():
 
     def run(self):
         for step in range(num_steps):
-            if step % 100 == 0:
+            if step % (num_steps//100) == 0:
                 print("Step {} of {}".format(step, num_steps))
             self.__step_particles()
             self.__apply_bnd_conds()
@@ -61,12 +60,13 @@ class Simulation():
             measurement.measure(self)
 
     def visualize_measurements(self):
-        pass
+        for measurement in self.measurements:
+            measurement.visualize()
 
 if __name__ == "__main__":
     num_particles = 108
     dt = 0.004 # Time step of the simulation
-    num_steps = 1000 # Total amount of time steps.
+    num_steps = 5500 # Total amount of time steps.
     temp = 1.462 # Initial temperature
     density = 0.80 # Initial density
     dimensions = [(num_particles/density) ** (1.0/3.0)] * 3
@@ -79,9 +79,10 @@ if __name__ == "__main__":
     boundaries = [Thermostat(temperature=therm_temp,
                              eq_time=therm_eq_time,
                              interval=therm_interval)]
-    measurements = [KinEnergy_Meas(realtime_print=True)]
+    measurements = [KinEnergy_Meas(), TotEnergy_Meas()]
 
     sim = Simulation(dt=dt, num_steps=num_steps, particles=particles,
                      space=space, boundaries=boundaries,
                      measurements=measurements)
     sim.run()
+    sim.visualize_measurements()
